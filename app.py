@@ -13,7 +13,7 @@ import tempfile
 import langdetect  # Module pour la détection de la langue
 
 # Configuration de l'application Streamlit
-st.title("Explorez Vos Documents Avec Intelligence")
+st.title("Système d'Interrogation de Documents avec LLM et Récupération")
 
 # Choix de la langue
 language_choices = ["français", "english", "arabic"]
@@ -110,15 +110,6 @@ def detect_language(text):
     except:
         return 'unknown'
 
-# Fonction pour ajuster la réponse en fonction de la langue
-def adjust_response_language(response, lang):
-    if lang == 'fr':
-        return f"Réponse basée sur les documents : {response}"
-    elif lang == 'ar':
-        return f"إجابة بناءً على المستندات : {response}"
-    else:
-        return f"Based on the documents: {response}"
-
 # Section pour télécharger un fichier PDF
 uploaded_file = st.file_uploader(translations[selected_language]["upload_file"], type=["pdf"])
 
@@ -138,13 +129,16 @@ with ThreadPoolExecutor() as executor:
             response_from_docs = retrieval_chain.invoke({"input": question})
             if not response_from_docs["answer"]:
                 response_from_llm = llm.generate([question])
-                response_text = response_from_llm.generations[0][0].text
+                st.write("Réponse générée par le LLM :", response_from_llm.generations[0][0].text)
             else:
-                response_text = response_from_docs["answer"]
-
-            # Détecter la langue de la question et ajuster la réponse
-            lang = detect_language(question)
-            final_response = adjust_response_language(response_text, lang)
-            st.write(final_response)
+                # Détecter la langue de la question et ajuster la réponse
+                lang = detect_language(question)
+                
+                if lang == 'arabic':
+                    st.write("إجابة بناءً على المستندات :", response_from_docs["answer"])  # Réponse en arabe
+                elif lang == 'français':
+                    st.write("Réponse basée sur les documents :", response_from_docs["answer"])  # Réponse en français
+                else:
+                    st.write("Based on the documents:", response_from_docs["answer"])  # Réponse en anglais
     else:
         st.write(translations[selected_language]["question_placeholder"])
